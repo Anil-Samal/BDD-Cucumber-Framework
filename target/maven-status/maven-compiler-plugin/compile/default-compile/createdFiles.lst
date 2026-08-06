@@ -22,6 +22,7 @@ factory\BrowserFactory.class
 config\ConfigReader.class
 config\PropertyLoader.class
 testdata\TestDataManager.class
+driver\RemoteDriverFactory.class
 factory\BrowserFactory$1.class
 managers\PageObjectManager.class
 utils\LoggerUtil.class

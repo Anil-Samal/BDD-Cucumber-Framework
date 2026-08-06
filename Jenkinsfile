@@ -1,13 +1,24 @@
 pipeline {
 
+
     agent any
 
+
+
     tools {
+
         jdk 'JDK21'
+
         maven 'Maven3.9'
+        
+        allure 'Allure'
+
     }
 
+
+
     parameters {
+
         choice(
             name: 'BROWSER',
             choices: [
@@ -15,92 +26,133 @@ pipeline {
                 'firefox',
                 'edge'
             ],
-            description:
-            'Select browser'
+            description: 'Browser selection'
         )
+
     }
+
+
 
     stages {
+
+
         stage('Checkout') {
+
             steps {
+
                 checkout scm
+
             }
 
         }
+
+
 
         stage('Clean') {
+
             steps {
 
-                bat 'mvn clean'
+                bat "mvn clean"
+
             }
+
         }
+
+
 
         stage('Execute Tests') {
+
             steps {
+
                 bat """
-
-                mvn test -Dbrowser=${BROWSER}
-
+                mvn test -Dbrowser=${params.BROWSER}
                 """
+
             }
 
         }
+
+
 
         stage('Generate Allure Report') {
-            steps {
-                bat """
 
-                allure generate target/allure-results ^
+            steps {
+
+                bat """
+                allure generate target/allure-results 
                 -o target/allure-report ^
                 --clean
-
                 """
+
             }
+
         }
+
+
     }
 
+
+
     post {
-        always {
-            junit(
-            '**/target/surefire-reports/*.xml'
-            )
 
-            publishHTML(
 
-                target: [
+       always {
 
-                    allowMissing: true,
 
-                    alwaysLinkToLastBuild: true,
+        junit(
+            allowEmptyResults: true,
+            testResults: '**/surefire-reports/*.xml'
+        )
 
-                    keepAll: true,
 
-                    reportDir:
-                    'target',
+        publishHTML(
+            target: [
+                reportDir: 'target/allure-report',
+                reportFiles: 'index.html',
+                reportName: 'Allure Report'
+            ]
+        )
 
-                    reportFiles:
-                    'cucumber-report.html',
 
-                    reportName:
-                    'Cucumber Report'
-                ]
-            )
+        publishHTML(
+            target: [
+                reportDir: 'target',
+                reportFiles: 'cucumber-report.html',
+                reportName: 'Cucumber Report'
+            ]
+        )
 
-            archiveArtifacts(
-                artifacts:
-                'target/screenshots/**/*',
 
-                allowEmptyArchive:true
-            )
-        }
+        archiveArtifacts(
+            artifacts: 'screenshots/**/*',
+            allowEmptyArchive: true
+        )
+
+
+        archiveArtifacts(
+            artifacts: 'target/allure-report/**/*',
+            allowEmptyArchive: true
+        )
+
+    }
+
 
         success {
-            echo 'BUILD SUCCESS'
+
+            echo "BUILD SUCCESS"
+
         }
+
+
 
         failure {
 
-            echo 'BUILD FAILED'
+            echo "BUILD FAILED"
+
         }
+
+
     }
+
+
 }
